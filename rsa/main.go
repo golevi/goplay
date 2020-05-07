@@ -1,3 +1,11 @@
+//
+// rsa
+//
+// references used to write this
+// - https://blog.cloudflare.com/a-relatively-easy-to-understand-primer-on-elliptic-curve-cryptography/
+// - https://en.wikipedia.org/wiki/RSA_(cryptosystem)
+// - https://golang.org/pkg/math/big/
+//
 package main
 
 import (
