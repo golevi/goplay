@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -8,6 +9,11 @@ import (
 	"os"
 	"time"
 )
+
+// XorBy is what we used to xor each color of each pixel
+type XorBy struct {
+	R, G, B uint32
+}
 
 func main() {
 	logoFile, err := os.Open("logo.jpg")
@@ -27,13 +33,30 @@ func main() {
 
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 
+	var xorbys = []XorBy{}
+
 	for w := 0; w < width; w++ {
 		for h := 0; h < height; h++ {
 			r, g, b, a := logo.At(w, h).RGBA()
 
-			r = r ^ rnd.Uint32()
-			g = g ^ rnd.Uint32()
-			b = b ^ rnd.Uint32()
+			rxor := rnd.Uint32()
+			gxor := rnd.Uint32()
+			bxor := rnd.Uint32()
+
+			r = r ^ rxor
+			g = g ^ gxor
+			b = b ^ bxor
+
+			// fmt.Println(rxor)
+
+			xorby := XorBy{
+				R: rxor,
+				G: gxor,
+				B: bxor,
+			}
+
+			xorbys = append(xorbys, xorby)
+			// xorbys[width][height] = xorby
 
 			c := color.RGBA{
 				R: uint8(r), G: uint8(g), B: uint8(b), A: uint8(a),
@@ -52,4 +75,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println(xorbys)
 }
