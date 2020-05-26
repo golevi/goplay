@@ -2,32 +2,25 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
-	"math/big"
-	"math/rand"
+	"log"
 	"time"
 )
 
 const max string = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 
 func findPrime(ctx context.Context, i chan<- string) {
-	b := &big.Int{}
-	n := &big.Int{}
-
-	n.SetString(max, 16)
-	s := rand.NewSource(time.Now().UnixNano())
-	r := rand.New(s)
-
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			p := b.Rand(r, n)
-
-			if p.ProbablyPrime(4096) {
-				i <- p.String()
+			b, err := rand.Prime(rand.Reader, 4096)
+			if err != nil {
+				log.Println(err)
 			}
+			i <- b.String()
 		}
 	}
 }
