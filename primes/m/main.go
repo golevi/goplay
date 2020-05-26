@@ -18,6 +18,11 @@ func mersenne(n int64) {
 	m.SetInt64(0)
 	b.SetInt64(2)
 
+	// first check if n is prime, if it isn't, return
+	if !y.ProbablyPrime(16) {
+		return
+	}
+
 	b.Exp(b, y, m)
 
 	x := &big.Int{}
