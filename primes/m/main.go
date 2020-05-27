@@ -22,7 +22,7 @@ func mersenne(ctx context.Context, i <-chan string, cancel context.CancelFunc) {
 			b.SetInt64(2)
 
 			// Do this to show progress
-			fmt.Printf(".")
+			log.Println(".")
 
 			b.Exp(b, y, m)
 
