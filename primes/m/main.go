@@ -17,33 +17,40 @@ type prime struct {
 	N int64
 }
 
-func mersenne(ctx context.Context, pch chan prime, n int64) {
-	b, y, m := &big.Int{}, &big.Int{}, &big.Int{}
+func mersenne(ctx context.Context, pch chan prime, n chan int64) {
+	for {
+		select {
+		case nt := <-n:
+			b, y, m := &big.Int{}, &big.Int{}, &big.Int{}
 
-	y.SetInt64(n)
-	m.SetInt64(0)
-	b.SetInt64(2)
+			y.SetInt64(nt)
+			m.SetInt64(0)
+			b.SetInt64(2)
 
-	// first check if n is prime, if it isn't, return
-	if !y.ProbablyPrime(4) {
-		return
-	}
+			// first check if n is prime, if it isn't, return
+			if !y.ProbablyPrime(4) {
+				return
+			}
 
-	// Do this to show progress
-	fmt.Printf(".")
+			// Do this to show progress
+			fmt.Printf(".")
 
-	b.Exp(b, y, m)
+			b.Exp(b, y, m)
 
-	x := &big.Int{}
-	x.SetInt64(1)
-	b.Sub(b, x)
+			x := &big.Int{}
+			x.SetInt64(1)
+			b.Sub(b, x)
 
-	if b.ProbablyPrime(16) {
-		var p prime
-		p.P = b.String()
-		p.N = n
+			if b.ProbablyPrime(16) {
+				var p prime
+				p.P = b.String()
+				p.N = nt
 
-		pch <- p
+				pch <- p
+			}
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 
@@ -75,11 +82,14 @@ func main() {
 	defer cancel()
 
 	pch := make(chan prime)
+	ich := make(chan int64)
+
+	go mersenne(ctx, pch, ich)
+	go mersenne(ctx, pch, ich)
 
 	x := int64(s)
-	for i := x; i < x*10; i = i + 2 {
-		go mersenne(ctx, pch, i)
-		go mersenne(ctx, pch, i+1)
+	for i := x; i < x*10; i++ {
+		ich <- i
 	}
 
 	printer(ctx, pch, cancel)
