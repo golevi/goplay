@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"os"
@@ -11,7 +12,12 @@ var knowns = []uint64{
 	82589933,
 }
 
-func mersenne(n int64) {
+type prime struct {
+	P string
+	N int64
+}
+
+func mersenne(ctx context.Context, pch chan prime, n int64) {
 	b, y, m := &big.Int{}, &big.Int{}, &big.Int{}
 
 	y.SetInt64(n)
@@ -19,9 +25,12 @@ func mersenne(n int64) {
 	b.SetInt64(2)
 
 	// first check if n is prime, if it isn't, return
-	if !y.ProbablyPrime(16) {
+	if !y.ProbablyPrime(4) {
 		return
 	}
+
+	// Do this to show progress
+	fmt.Printf(".")
 
 	b.Exp(b, y, m)
 
@@ -30,8 +39,23 @@ func mersenne(n int64) {
 	b.Sub(b, x)
 
 	if b.ProbablyPrime(16) {
-		fmt.Printf("\n================\n2^n-1 | n=%d\n================\n", n)
-		fmt.Println(b.String())
+		var p prime
+		p.P = b.String()
+		p.N = n
+
+		pch <- p
+	}
+}
+
+func printer(ctx context.Context, pch chan prime, cancel context.CancelFunc) {
+	for {
+		select {
+		case p := <-pch:
+			fmt.Printf("\n================\n%d (2^n)-1\n================\n%s\n\n", p.N, p.P)
+			cancel()
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 
@@ -46,9 +70,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	x := int64(s)
 
-	for i := x; i < x*10; i++ {
-		mersenne(i)
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+
+	pch := make(chan prime)
+
+	x := int64(s)
+	for i := x; i < x*10; i = i + 2 {
+		go mersenne(ctx, pch, i)
+		go mersenne(ctx, pch, i+1)
 	}
+
+	printer(ctx, pch, cancel)
 }
