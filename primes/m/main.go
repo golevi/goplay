@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"os"
 	"strconv"
+	"time"
 )
 
 const primeSize = 27 // ~111,926,261
@@ -92,6 +93,18 @@ func printPrime(ctx context.Context, i <-chan string) {
 	}
 }
 
+func ping(ctx context.Context, sleep int) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			fmt.Print(".")
+			time.Sleep(time.Second * sleep)
+		}
+	}
+}
+
 func main() {
 	fmt.Println("Starting")
 
@@ -108,6 +121,7 @@ func main() {
 
 	// go printPrime(ctx, ch)
 	go findPrime(ctx, cancel, ch, size)
+	go ping(ctx, 10)
 
 	for i := 0; i < 10; i++ {
 		go mersenne(ctx, ch, cancel)
